@@ -1,0 +1,459 @@
+{% extends "base.html" %}
+
+{% block title %}{{ company.company_name or company_id }} – Analysis | Bluestock{% endblock %}
+
+{% block content %}
+<style>
+  .detail-hero {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 24px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .detail-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #2563eb, #22c55e, #f59e0b);
+  }
+  .detail-glow {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.08);
+    filter: blur(40px);
+    top: -100px;
+    right: -100px;
+    animation: glowPulse 6s ease-in-out infinite;
+  }
+  .exclusive-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    color: white;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    animation: badgeFloat 3s ease-in-out infinite;
+  }
+  .metric-card {
+    border-radius: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(37, 99, 235, 0.15);
+  }
+  .pros-cons-item {
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .pros-cons-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 0 2px 2px 0;
+  }
+  .pros { background: rgba(34, 197, 94, 0.05); }
+  .pros::before { background: linear-gradient(to bottom, #22c55e, #16a34a); }
+  .cons { background: rgba(239, 68, 68, 0.05); }
+  .cons::before { background: linear-gradient(to bottom, #ef4444, #dc2626); }
+  .pros-cons-item:hover {
+    transform: translateX(8px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  }
+  .fade-in-up {
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeInUp 0.8s ease forwards;
+  }
+  .fade-in-up:nth-child(1) { animation-delay: 0.1s; }
+  .fade-in-up:nth-child(2) { animation-delay: 0.2s; }
+  .fade-in-up:nth-child(3) { animation-delay: 0.3s; }
+
+  @keyframes glowPulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+  @keyframes badgeFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-3px); }
+  }
+  @keyframes fadeInUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<div class="container py-5">
+  <!-- Hero Section -->
+  <div class="detail-hero fade-in-up position-relative">
+    <div class="detail-glow"></div>
+    
+    {% if is_exclusive %}
+    <div class="exclusive-badge">
+      <i class="fas fa-crown me-1"></i>EXCLUSIVE
+    </div>
+    {% endif %}
+
+    <!-- Breadcrumb + title -->
+    <div class="row mb-3">
+      <div class="col">
+        <nav aria-label="breadcrumb" class="small mb-2">
+          <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Bluestock</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('all_companies') }}">Companies</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ company_id }}</li>
+          </ol>
+        </nav>
+        <h1 class="fw-bold mb-2">
+          {{ company.company_name or company_id }}
+          {% if is_exclusive %}
+          <span class="badge bg-success bg-opacity-10 text-success ms-2">
+            <i class="fas fa-star me-1"></i>Exclusive pick
+          </span>
+          {% endif %}
+        </h1>
+        
+        <!-- Creator credit -->
+        <div class="small text-muted mb-3 d-flex align-items-center gap-2">
+          <i class="fas fa-user-tie text-primary"></i>
+          <span>Analysis by <strong>Harish</strong></span>
+        </div>
+        
+        <p class="text-muted mb-0 lead">
+          ML-generated snapshot of strengths and risks based on long-term fundamentals.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top company summary card -->
+  <div class="row mb-4 fade-in-up">
+    <div class="col-lg-8">
+      <div class="card bluestock-card p-4 metric-card">
+        <div class="d-flex align-items-center">
+          {% if company.company_logo %}
+          <img src="{{ company.company_logo }}" alt="{{ company.company_name }} logo"
+               class="me-3 rounded" style="height:96px;">
+          {% else %}
+          <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-3"
+               style="width:96px;height:96px;">
+            <span class="fw-bold text-primary">{{ company_id[0] }}</span>
+          </div>
+          {% endif %}
+          <div class="flex-grow-1">
+            <h5 class="mb-1">{{ company_id }}</h5>
+            <div class="small text-muted">
+              {{ company.about_company or 'Bluestock coverage company' }}
+            </div>
+
+            <!-- Website / Chart / Symbol -->
+            <div class="small mt-2">
+              {% if company.website %}
+              <div>
+                <span class="fw-semibold">Website:</span>
+                <a href="{{ company.website }}" target="_blank">{{ company.website }}</a>
+              </div>
+              {% endif %}
+              {% if company.chart_link %}
+              <div class="mt-1">
+                <span class="fw-semibold">Chart:</span>
+                <a href="{{ company.chart_link }}" target="_blank"
+                   class="btn btn-outline-primary btn-sm ms-1">
+                  <i class="fas fa-chart-line me-1"></i>Launch Chart
+                </a>
+              </div>
+              {% endif %}
+              <div class="mt-1">
+                <span class="fw-semibold">Symbol:</span> {{ company_id }}
+              </div>
+            </div>
+          </div>
+          <div class="text-end">
+            <div class="ml-badge mb-1">
+              <i class="fas fa-brain me-1"></i>ML Analysis
+            </div>
+            <small class="text-muted">Updated just now</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Metrics row -->
+  <div class="row g-3 mb-4 fade-in-up">
+    <div class="col-md-3">
+      <div class="card bluestock-card h-100 text-center p-3 metric-card">
+        <div class="small text-muted">ROE (latest)</div>
+        <div class="h3 mb-0 text-primary">{{ metrics.roe or 'N/A' }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bluestock-card h-100 text-center p-3 metric-card">
+        <div class="small text-muted">Sales growth</div>
+        <div class="h6 mb-0 text-success">{{ metrics.sales_cagr or 'N/A' }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bluestock-card h-100 text-center p-3 metric-card">
+        <div class="small text-muted">Profit growth</div>
+        <div class="h6 mb-0 text-info">{{ metrics.profit_cagr or 'N/A' }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bluestock-card h-100 text-center p-3 metric-card">
+        <div class="small text-muted">Face / Book Value</div>
+        <div class="h6 mb-0">
+          FV {{ company.face_value or '-' }} • BV {{ company.book_value or '-' }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pros & Cons panel -->
+  <div class="row fade-in-up">
+    <div class="col-lg-10">
+      <div class="card bluestock-card">
+        <div class="card-header bg-white border-0">
+          <div class="d-flex align-items-center mb-4">
+            <div class="ml-badge me-3 px-3 py-1">
+              <i class="fas fa-brain me-1"></i>ML Analysis
+            </div>
+            <h3 class="fw-bold mb-0">Pros & Cons</h3>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="row g-0 border-top">
+            <div class="col-md-6 border-end">
+              <div class="p-3 bg-primary bg-opacity-5 fw-semibold text-primary">Pros</div>
+              <div class="pros-cons-item pros">
+                {% if pros_list %}
+                  <ul class="list-unstyled mb-0 small">
+                    {% for pro in pros_list %}
+                    <li class="mb-2 d-flex">
+                      <span class="me-2 text-primary">•</span>
+                      <span>{{ pro }}</span>
+                    </li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <p class="text-muted small mb-0">No pros generated yet.</p>
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 bg-danger bg-opacity-5 fw-semibold text-danger">Cons</div>
+              <div class="pros-cons-item cons">
+                {% if cons_list %}
+                  <ul class="list-unstyled mb-0 small">
+                    {% for con in cons_list %}
+                    <li class="mb-2 d-flex">
+                      <span class="me-2 text-danger">•</span>
+                      <span>{{ con }}</span>
+                    </li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <p class="text-muted small mb-0">No cons generated yet.</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Balance Sheet -->
+  <div class="row mt-5 fade-in-up">
+    <div class="col-12">
+      <h4 class="fw-bold mb-2">Balance Sheet</h4>
+      <p class="text-muted small mb-3">
+        Consolidated Financial Reports. All figures in INR Crores.
+      </p>
+      <div class="card bluestock-card">
+        <div class="table-responsive">
+          <table class="table table-striped mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Year</th>
+                <th>Equity Capital</th>
+                <th>Reserves</th>
+                <th>Borrowings</th>
+                <th>Other Liabilities</th>
+                <th>Total Liabilities</th>
+                <th>Fixed Assets</th>
+                <th>CWIP</th>
+                <th>Investments</th>
+                <th>Other Assets</th>
+                <th>Total Assets</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in balancesheet %}
+              <tr>
+                <td>{{ row.year }}</td>
+                <td>{{ row.equity_capital }}</td>
+                <td>{{ row.reserves }}</td>
+                <td>{{ row.borrowings }}</td>
+                <td>{{ row.other_liabilities }}</td>
+                <td>{{ row.total_liabilities }}</td>
+                <td>{{ row.fixed_assets }}</td>
+                <td>{{ row.cwip }}</td>
+                <td>{{ row.investments }}</td>
+                <td>{{ row.other_asset }}</td>
+                <td>{{ row.total_assets }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profit and Loss -->
+  <div class="row mt-5 fade-in-up">
+    <div class="col-12">
+      <h4 class="fw-bold mb-2">Profit and Loss</h4>
+      <p class="text-muted small mb-3">
+        Consolidated Financial Reports. All figures in INR Crores.
+      </p>
+      <div class="card bluestock-card">
+        <div class="table-responsive">
+          <table class="table table-striped mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Year</th>
+                <th>Sales</th>
+                <th>Expenses</th>
+                <th>Operating Profit</th>
+                <th>OPM (%)</th>
+                <th>Other Income</th>
+                <th>Interest</th>
+                <th>Depreciation</th>
+                <th>Profit Before Tax</th>
+                <th>Tax (%)</th>
+                <th>Net Profit</th>
+                <th>EPS</th>
+                <th>Dividend Payout (%)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in profitandloss %}
+              <tr>
+                <td>{{ row.year }}</td>
+                <td>{{ row.sales }}</td>
+                <td>{{ row.expenses }}</td>
+                <td>{{ row.operating_profit }}</td>
+                <td>{{ row.opm_percentage }}</td>
+                <td>{{ row.other_income }}</td>
+                <td>{{ row.interest }}</td>
+                <td>{{ row.depreciation }}</td>
+                <td>{{ row.profit_before_tax }}</td>
+                <td>{{ row.tax_percentage }}</td>
+                <td>{{ row.net_profit }}</td>
+                <td>{{ row.eps }}</td>
+                <td>{{ row.dividend_payout }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cash Flow -->
+  <div class="row mt-5 mb-4 fade-in-up">
+    <div class="col-12">
+      <h4 class="fw-bold mb-2">Cash Flow</h4>
+      <p class="text-muted small mb-3">
+        Consolidated Financial Reports. All figures in INR Crores.
+      </p>
+      <div class="card bluestock-card">
+        <div class="table-responsive">
+          <table class="table table-striped mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Year</th>
+                <th>Net Cash from Operating Activities</th>
+                <th>Net Cash from Investing Activities</th>
+                <th>Net Cash from Financing Activities</th>
+                <th>Net Increase in Cash</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in cashflow %}
+              <tr>
+                <td>{{ row.year }}</td>
+                <td>{{ row.operating_activity }}</td>
+                <td>{{ row.investing_activity }}</td>
+                <td>{{ row.financing_activity }}</td>
+                <td>{{ row.net_cash_flow }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Documents / Annual Reports -->
+  <div class="row mt-2 mb-5 fade-in-up">
+    <div class="col-lg-8 mx-auto">
+      <h4 class="fw-bold mb-3">Documents</h4>
+      <div class="card bluestock-card">
+        <div class="table-responsive">
+          <table class="table table-striped mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 80px;">Year</th>
+                <th class="text-end">Annual Report</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for doc in documents %}
+              <tr>
+                <td>{{ doc.Year }}</td>
+                <td class="text-end">
+                  <a href="{{ doc.Annual_Report }}"
+                     class="btn btn-outline-primary btn-sm"
+                     target="_blank">
+                    View Report
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{{ super() }}
+</div>
+{% endblock %}
